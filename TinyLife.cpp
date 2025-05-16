@@ -22,7 +22,7 @@ void drawSideLines() // Draw top and bottom lines (using for debugging)
     std::fill(grid[totalRow - 1].begin(), grid[totalRow - 1].end(), true);
 }
 
-void drawRandom() // Fill the grid randomly
+void drawRandom() // Fill the grid randomly (I should change the RNG method later)
 {
     for (int row = 0; row < totalRow; row++)
     {
@@ -33,7 +33,7 @@ void drawRandom() // Fill the grid randomly
     }
 }
 
-void outputGrid() // Print the grid to the terminal
+void outputGrid() // Print the grid to the terminal (requires UTF-8! could change ■ to # if not supported)
 {
     for (int row = 0; row < totalRow; row++)
     {
