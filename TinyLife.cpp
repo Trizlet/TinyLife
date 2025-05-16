@@ -3,6 +3,7 @@
 #include <chrono>
 #include <thread>
 #include <cstring>
+#include <csignal>
 
 const int totalRow = 6, totalCol = 6;
 
@@ -42,8 +43,39 @@ void drawSideLines(bool arr[][totalCol], int totalRow, int totalCol)
     }
 }
 
+void outputGrid(bool arr[][totalCol], int totalRow, int totalCol)
+{
+    for (int row = 0; row < totalRow; row++)
+    {
+        for (int col = 0; col < totalCol; col++)
+        {
+            if (arr[row][col])
+            {
+                std::cout << "■";
+            }
+            else
+            {
+                std::cout << "□";
+            }
+            std::cout << " ";
+        }
+        if (row != totalRow - 1)
+        {
+            std::cout << "\n";
+        }
+    }
+}
+
+void showCursorAndExit(int signum)
+{
+    std::cout << "\033[?25h" << std::flush;
+    std::exit(signum);
+}
+
 int main()
 {
+    std::signal(SIGINT, showCursorAndExit);
+
     int count = 0;
 
     bool arr[totalRow][totalCol];
@@ -54,24 +86,12 @@ int main()
     // drawVertLines(arr, totalRow, totalCol);
     drawSideLines(arr, totalRow, totalCol);
 
+    std::cout << "\033[?25l";
+
     while (true)
     {
-        for (int row = 0; row < totalRow; row++)
-        {
-            for (int col = 0; col < totalCol; col++)
-            {
-                if (arr[row][col])
-                {
-                    std::cout << "■";
-                }
-                else
-                {
-                    std::cout << "□";
-                }
-                std::cout << " ";
-            }
-            std::cout << "\n";
-        }
+
+        outputGrid(arr, totalRow, totalCol);
 
         for (int row = 0; row < totalRow; row++)
         {
@@ -109,6 +129,7 @@ int main()
 
         if (memcmp(arr, newArr, sizeof(arr)) == 0)
         {
+            std::cout << "\033[?25h";
             return 0;
         }
 
@@ -117,13 +138,14 @@ int main()
             std::copy(newArr[row], newArr[row] + totalCol, arr[row]);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
-        for (int termRow = 0; termRow < totalRow; termRow++)
+        for (int termRow = 0; termRow < totalRow - 1; termRow++)
         {
             std::cout << "\033[F";
         }
     }
 
+    std::cout << "\033[?25h";
     return 0;
 }
