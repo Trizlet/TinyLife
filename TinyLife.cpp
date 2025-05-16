@@ -2,67 +2,49 @@
 #include <algorithm>
 #include <chrono>
 #include <thread>
-#include <cstring>
 #include <csignal>
+#include <string>
+#include <cstdlib>
+#include <vector>
 
-const int totalRow = 10, totalCol = 10;
+int totalRow = 20, totalCol = 20, sleepMillis = 0;
 
-void drawVertLines(bool arr[][totalCol], int totalRow, int totalCol)
+std::vector<std::vector<bool>> arr;
+std::vector<std::vector<bool>> newArr;
+
+void drawSideLines()
+{
+    for (int row = 1; row < totalRow - 1; row++)
+    {
+        std::fill(arr[row].begin(), arr[row].end(), false);
+    }
+    std::fill(arr[0].begin(), arr[0].end(), true);
+    std::fill(arr[totalRow - 1].begin(), arr[totalRow - 1].end(), true);
+}
+
+void drawRandom()
 {
     for (int row = 0; row < totalRow; row++)
     {
         for (int col = 0; col < totalCol; col++)
         {
-            if (col % 2 == 0)
-            {
-                arr[row][col] = true;
-            }
-            else
-            {
-                arr[row][col] = false;
-            }
+            arr[row][col] = (std::rand() % 2) == 0;
         }
     }
 }
 
-void drawSideLines(bool arr[][totalCol], int totalRow, int totalCol)
+void outputGrid()
 {
     for (int row = 0; row < totalRow; row++)
     {
-        for (int col = 0; col < totalCol; col++)
+        std::string line;
+        line.reserve(totalCol * 2);
+        for (int col = 0; col < totalCol; ++col)
         {
-            if (row == 0 || row == totalRow - 1)
-            {
-                arr[row][col] = true;
-            }
-            else
-            {
-                arr[row][col] = false;
-            }
+            line += (arr[row][col] ? "■" : ".");
+            line += ' ';
         }
-    }
-}
-
-void outputGrid(bool arr[][totalCol], int totalRow, int totalCol)
-{
-    for (int row = 0; row < totalRow; row++)
-    {
-        for (int col = 0; col < totalCol; col++)
-        {
-            if (arr[row][col])
-            {
-                std::cout << "■";
-            }
-            else
-            {
-                std::cout << ".";
-            }
-            std::cout << " ";
-        }
-        if (row != totalRow - 1)
-        {
-            std::cout << "\n";
-        }
+        std::cout << line << "\n";
     }
 }
 
@@ -72,26 +54,45 @@ void showCursorAndExit(int signum)
     std::exit(signum);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+
+    if (argc == 1) // no arguments provided
+    {
+        totalRow = 20, totalCol = 20, sleepMillis = 250;
+    }
+    else if (argc == 4)
+    {
+        totalRow = std::atoi(argv[1]);
+        totalCol = std::atoi(argv[2]);
+        sleepMillis = std::atoi(argv[3]);
+
+        if (totalRow <= 2 || totalCol <= 2 || sleepMillis < 0)
+        {
+            std::cerr << "Invalid arguments: totalRow and totalCol must be > 2, sleep_milliseconds >= 0\n";
+            return 1;
+        }
+        }
+    else
+    {
+        std::cerr << "Usage: " << argv[0] << " <totalRow> <totalCol> <sleep_milliseconds>\n";
+        std::cerr << "Or run without arguments to use defaults (50 50 250).\n";
+        return 1;
+    }
+    arr.resize(totalRow, std::vector<bool>(totalCol, false));
+    newArr.resize(totalRow, std::vector<bool>(totalCol, false));
+
     std::signal(SIGINT, showCursorAndExit);
+    std::cout << "\033[?25l";
 
     int count = 0;
-
-    bool arr[totalRow][totalCol];
-    bool newArr[totalRow][totalCol];
-
     static const int directions[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
 
-    // drawVertLines(arr, totalRow, totalCol);
-    drawSideLines(arr, totalRow, totalCol);
-
-    std::cout << "\033[?25l";
+    drawRandom();
 
     while (true)
     {
-
-        outputGrid(arr, totalRow, totalCol);
+        outputGrid();
 
         for (int row = 0; row < totalRow; row++)
         {
@@ -99,7 +100,7 @@ int main()
             {
                 count = 0;
 
-                for (auto dir : directions)
+                for (auto &dir : directions)
                 {
                     int checkRow = row + dir[0];
                     int checkCol = col + dir[1];
@@ -127,23 +128,17 @@ int main()
             }
         }
 
-        if (memcmp(arr, newArr, sizeof(arr)) == 0)
+        if (arr == newArr)
         {
             std::cout << "\033[?25h";
             return 0;
         }
 
-        for (int row = 0; row < totalRow; row++)
-        {
-            std::copy(newArr[row], newArr[row] + totalCol, arr[row]);
-        }
+        arr = newArr;
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillis));
 
-        for (int termRow = 0; termRow < totalRow - 1; termRow++)
-        {
-            std::cout << "\033[F";
-        }
+        std::cout << "\033[" << totalRow << "F" << std::flush;
     }
 
     std::cout << "\033[?25h";
