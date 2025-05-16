@@ -5,7 +5,7 @@
 #include <cstring>
 #include <csignal>
 
-const int totalRow = 6, totalCol = 6;
+const int totalRow = 10, totalCol = 10;
 
 void drawVertLines(bool arr[][totalCol], int totalRow, int totalCol)
 {
@@ -55,7 +55,7 @@ void outputGrid(bool arr[][totalCol], int totalRow, int totalCol)
             }
             else
             {
-                std::cout << "□";
+                std::cout << ".";
             }
             std::cout << " ";
         }
@@ -138,7 +138,7 @@ int main()
             std::copy(newArr[row], newArr[row] + totalCol, arr[row]);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
         for (int termRow = 0; termRow < totalRow - 1; termRow++)
         {
