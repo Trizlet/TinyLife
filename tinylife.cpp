@@ -42,7 +42,7 @@ void outputGrid() // Print the grid to the terminal (requires UTF-8! could chang
         line.reserve(totalCol * 2);
         for (int col = 0; col < totalCol; ++col)
         {
-            line += (grid[row][col] ? "■" : ".");
+            line += (grid[row][col] ? "#" : ".");
             line += ' ';
         }
         std::cout << line << "\n";
@@ -70,9 +70,9 @@ int main(int argc, char *argv[])
         totalCol = std::atoi(argv[2]);
         sleepMillis = std::atoi(argv[3]);
 
-        if (totalRow <= 2 || totalCol <= 2 || sleepMillis < 0)
+        if (totalRow <= 2 || totalCol <= 2 || sleepMillis < 1)
         {
-            std::cerr << "Invalid arguments: totalRow and totalCol must be > 2, sleep_milliseconds >= 0\n";
+            std::cerr << "Invalid arguments: totalRow and totalCol must be > 2, sleep_milliseconds >= 1\n";
             return 1;
         }
     }
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
 
         grid = newGrid; // Switch to the new iteration
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillis)); // Sleep if desired
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillis)); // Sleep between generations to set the sim speed
 
         std::cout << "\033[" << totalRow << "F" << std::flush; // Move the cursor back so the previous grid can be drawn over
     }
