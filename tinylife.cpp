@@ -15,6 +15,7 @@ static const int directions[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}
 
 static std::vector<std::vector<bool>> grid;
 static std::vector<std::vector<bool>> newGrid;
+static std::vector<std::vector<bool>> temp;
 
 void drawTopBottomSides() // Func to draw top and bottom lines
 {
@@ -168,13 +169,15 @@ int main(int argc, char *argv[]) // MAIN
             }
         }
 
-        // Exit if the grid is static (need to implement loop detection)
-        if (grid == newGrid)
+        // Exit if the grid is static or looping (need to implement a way to detect longer loops)
+        if (grid == newGrid || temp == newGrid)
         {
             showCursorAndExit(0);
         }
 
-        grid = newGrid; // Switch to the new iteration
+        temp = grid; // Store the current grid so 2 generations later we can check if we're caught in a simple short loop
+
+        grid = newGrid; // Switch to the new iteration before running computation again
 
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillis)); // Sleep between generations to set the sim speed
 
