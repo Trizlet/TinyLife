@@ -5,6 +5,7 @@
 #include <csignal>
 #include <string>
 #include <cstdlib>
+#include <ctime>
 #include <vector>
 
 // Initialize rows, cols, and sleep integers & the grid vectors
@@ -56,6 +57,8 @@ void showCursorAndExit(int signum) // Restore the cursor on exit
 
 int main(int argc, char *argv[])
 {
+
+    std::srand(static_cast<unsigned>(std::time(nullptr))); // Seed the RNG
 
     if (argc == 1) // No arguments provided: default
     {
