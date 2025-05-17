@@ -19,6 +19,7 @@ _(Here: 50 rows, 50 columns, 250 ms between generations.)_
 
 ## 📝 Notes
 
-- Defaults to a 20 × 20 grid with a 250 ms delay if no arguments are given
-- Currently, only random grid generation is supported
-- Just a fun little project. not meant to be fancy!
+* Defaults to a 20 × 20 grid with a 250 ms delay if no arguments are given
+* Currently, only random grid generation is supported
+* Works on **Windows** and **Linux**
+* Just a fun little project. Not meant to be fancy!
