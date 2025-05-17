@@ -1,46 +1,53 @@
-#include <iostream>
+#include <cstdlib>
+#include <cstring>
 #include <algorithm>
 #include <chrono>
-#include <thread>
 #include <csignal>
+#include <iostream>
+#include <random>
 #include <string>
-#include <cstdlib>
-#include <ctime>
+#include <thread>
 #include <vector>
 
-// Initialize rows, cols, and sleep integers & the grid vectors
-int totalRow = 20, totalCol = 20, sleepMillis = 0;
-std::vector<std::vector<bool>> grid;
-std::vector<std::vector<bool>> newGrid;
+// Initialize variables and grids
+static int totalRow = 20, totalCol = 20;
+static const int directions[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}}; // "Chart" of cell neighbor directions
 
-void drawSideLines() // Draw top and bottom lines (using for debugging)
+static std::vector<std::vector<bool>> grid;
+static std::vector<std::vector<bool>> newGrid;
+
+void drawTopBottomSides() // Func to draw top and bottom lines
 {
-    for (int row = 1; row < totalRow - 1; row++)
-    {
-        std::fill(grid[row].begin(), grid[row].end(), false);
-    }
     std::fill(grid[0].begin(), grid[0].end(), true);
     std::fill(grid[totalRow - 1].begin(), grid[totalRow - 1].end(), true);
 }
 
-void drawRandom() // Fill the grid randomly (I should change the RNG method later)
+void drawLeftRightSides() // Func to draw left and right lines
 {
     for (int row = 0; row < totalRow; row++)
     {
-        for (int col = 0; col < totalCol; col++)
-        {
-            grid[row][col] = (std::rand() % 2) == 0;
-        }
+        grid[row][0] = true;
+        grid[row][totalCol - 1] = true;
     }
 }
 
-void outputGrid() // Print the grid to the terminal (requires UTF-8! could change ■ to # if not supported)
+void drawRandom() // Func to fill the grid randomly
+{
+    static std::mt19937 rng{std::random_device{}()};
+    static std::bernoulli_distribution coin(0.5);
+
+    for (int row = 0; row < totalRow; row++)
+        for (int col = 0; col < totalCol; col++)
+            grid[row][col] = coin(rng);
+}
+
+void outputGrid() // Func to output the whole grid line by line
 {
     for (int row = 0; row < totalRow; row++)
     {
         std::string line;
         line.reserve(totalCol * 2);
-        for (int col = 0; col < totalCol; ++col)
+        for (int col = 0; col < totalCol; col++)
         {
             line += (grid[row][col] ? "#" : ".");
             line += ' ';
@@ -49,63 +56,97 @@ void outputGrid() // Print the grid to the terminal (requires UTF-8! could chang
     }
 }
 
-void showCursorAndExit(int signum) // Restore the cursor on exit
+void showCursorAndExit(int signum) // Func to exit safely and restore the cursor
 {
     std::cout << "\033[?25h" << std::flush;
     std::exit(signum);
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char *argv[]) // MAIN
 {
+    int sleepMillis = 250, preset = 0;
 
-    std::srand(static_cast<unsigned>(std::time(nullptr))); // Seed the RNG
-
-    if (argc == 1) // No arguments provided: default
+    // Check for help flag
+    if (argc > 1 && (std::strcmp(argv[1], "-h") == 0 || std::strcmp(argv[1], "--help") == 0))
     {
-        totalRow = 20, totalCol = 20, sleepMillis = 250;
+        std::cout << "Usage:\n\n"
+                  << " no args (defaults: 20 20 250 0)\n"
+                  << " <rows> (square)\n"
+                  << " <rows> <cols>\n"
+                  << " <rows> <cols> <ms>\n"
+                  << " <rows> <cols> <ms> <preset>\n"
+                  << " -h | --help (show this message)\n";
+        return 0;
     }
-    else if (argc == 4) // Arguments provided
+
+    switch (argc) // Begin command arg parsing
     {
+    case 1: // Defaults: 20x20, 250ms, preset=0
+        break;
+    case 2: // One arg: square size
+        totalRow = totalCol = std::atoi(argv[1]);
+        break;
+    case 3: // Two args: rows and cols
+        totalRow = std::atoi(argv[1]);
+        totalCol = std::atoi(argv[2]);
+        break;
+    case 4: // Three args: rows, cols, sleep
         totalRow = std::atoi(argv[1]);
         totalCol = std::atoi(argv[2]);
         sleepMillis = std::atoi(argv[3]);
-
-        if (totalRow <= 2 || totalCol <= 2 || sleepMillis < 1)
-        {
-            std::cerr << "Invalid arguments: totalRow and totalCol must be > 2, sleep_milliseconds >= 1\n";
-            return 1;
-        }
-    }
-    else
-    {
-        std::cerr << "Usage: " << argv[0] << " <totalRow> <totalCol> <sleep_milliseconds>\n";
-        std::cerr << "Or run without arguments to use defaults (50 50 250).\n";
+        break;
+    case 5: // Four args: rows, cols, sleep, preset
+        totalRow = std::atoi(argv[1]);
+        totalCol = std::atoi(argv[2]);
+        sleepMillis = std::atoi(argv[3]);
+        preset = std::atoi(argv[4]);
+        break;
+    default:
+        std::cerr << "error";
         return 1;
     }
+
+    if (totalRow <= 2 || totalCol <= 2 || sleepMillis < 1 || preset < 0 || preset > 3)
+    {
+        std::cerr << "Invalid parameters: rows>2, cols>2, ms>=1, preset=0-3\n";
+        return 1;
+    }
+
+    std::signal(SIGINT, showCursorAndExit); // Prepare Ctrl+C exit
+    std::cout << "\033[?25l";               // Hide the cursor
+
     // Resize vectors to the desired size
     grid.resize(totalRow, std::vector<bool>(totalCol, false));
     newGrid.resize(totalRow, std::vector<bool>(totalCol, false));
 
-    // Prepare the cursor restoration mechanism before hiding the cursor
-    std::signal(SIGINT, showCursorAndExit);
-    std::cout << "\033[?25l";
-
-    int count = 0;
-    static const int directions[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
-
-    drawRandom();
+    // Draw the grid as desired
+    switch (preset)
+    {
+    case 1:
+        drawTopBottomSides();
+        drawLeftRightSides();
+        break;
+    case 2:
+        drawTopBottomSides();
+        break;
+    case 3:
+        drawLeftRightSides();
+        break;
+    default:
+        drawRandom();
+        break;
+    }
 
     while (true)
     {
-        outputGrid();
+        outputGrid(); // Print the grid
 
-        // The game of life computation. The next iteration is stored in newGrid
+        // The game of life computation.
         for (int row = 0; row < totalRow; row++)
         {
             for (int col = 0; col < totalCol; col++)
             {
-                count = 0;
-
+                int count = 0;
                 for (auto &dir : directions)
                 {
                     int checkRow = row + dir[0];
@@ -118,27 +159,19 @@ int main(int argc, char *argv[])
                         count++;
                     }
                 }
-
                 if ((count == 2 || count == 3) && grid[row][col])
-                {
                     newGrid[row][col] = true;
-                }
                 else if (count == 3 && !grid[row][col])
-                {
                     newGrid[row][col] = true;
-                }
                 else
-                {
                     newGrid[row][col] = false;
-                }
             }
         }
 
         // Exit if the grid is static (need to implement loop detection)
         if (grid == newGrid)
         {
-            std::cout << "\033[?25h";
-            return 0;
+            showCursorAndExit(0);
         }
 
         grid = newGrid; // Switch to the new iteration
@@ -147,7 +180,5 @@ int main(int argc, char *argv[])
 
         std::cout << "\033[" << totalRow << "F" << std::flush; // Move the cursor back so the previous grid can be drawn over
     }
-
-    std::cout << "\033[?25h"; // Restore cursor
-    return 0;
+    showCursorAndExit(1);
 }
