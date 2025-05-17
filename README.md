@@ -2,7 +2,8 @@
 
 A simple C++ implementation of Conway’s Game of Life that runs in your terminal.
 
-![tinylife](https://github.com/user-attachments/assets/1dc19cd7-0209-436d-8243-ced6766bc233)
+<img src="https://github.com/user-attachments/assets/1dc19cd7-0209-436d-8243-ced6766bc233" height="300" alt="tinylife">
+
 
 ## 🛠 Build & Run
 
